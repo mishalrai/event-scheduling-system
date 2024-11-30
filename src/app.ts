@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import logger from "morgan";
 import './config/database';
 import cors from "cors";
+import { eventRouter} from "./routes/event.routes";
 
 
 dotenv.config();
@@ -20,7 +21,8 @@ if (process.env.NODE_ENV === "development") {
   app.use(logger("dev"));
 }
 
-// app.use('api/event', eventRouter);
+//API routes
+app.use('/api/event', eventRouter);
 
 
 const server = app.listen(port, () => {
