@@ -1,83 +1,198 @@
 import { Request, Response, NextFunction } from "express";
 import moment from "moment-timezone";
-import {
-  getAllEventsService,
-  createEventServices,
-} from "../models/event.modal";
+import { Event, Participant } from "../models";
+import { Op } from "sequelize";
 
-export const getAllEvents = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const events = await getAllEventsService();
-  res.status(200).json({
-    status: "success",
-    message: "Data retrieved successfully.",
-    data: events,
-  });
-};
+interface ValidationError {
+  field: string;
+  validationError: string[];
+}
 
 export const createEvent = async (
   req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+  res: Response
+): Promise<void> => {
   try {
-    const { title } = req.body;
+    const validateEvent = validateEventPayload(req);
 
-    if (!title) {
-      throw "title not found";
+    if (validateEvent.length) {
+      res.status(422).json({
+        status: "error",
+        message: "validation error",
+        data: validateEvent,
+      });
+      return;
     }
 
-    const event = await createEventServices(
+    const { title, description, startTime, endTime, timeZone, location } =
+      req.body;
+
+    if (!moment.tz.zone(timeZone)) {
+      res.status(400).json({
+        status: "error",
+        message: "Invalid timezone",
+      });
+      return;
+    }
+
+    const startUtcTime = moment.tz(startTime, timeZone).utc();
+    const endUtcTime = moment.tz(endTime, timeZone).utc();
+
+    // Check new event is conflict with existing event
+    const conflictExist = await checkConflict(startUtcTime, endUtcTime);
+
+    if (conflictExist) {
+      res.status(409).json({
+        status: "error",
+        message: "Event time conflict with an existing event.",
+      });
+      return;
+    }
+
+    if (endUtcTime.isBefore(startUtcTime)) {
+      res.status(400).json({
+        status: "error",
+        message: "End time must be after start time",
+      });
+      return;
+    }
+
+    const event = await Event.create({
       title,
-      "description",
-      "2024-11-30T14:15:22Z",
-      "2024-12-30T14:15:22Z",
-      "asia",
-      "nepal"
-    );
-    res.status(200).json({
+      description,
+      start_time: startUtcTime,
+      end_time: endUtcTime,
+      time_zone: timeZone,
+      location,
+    });
+
+    res.status(201).json({
       status: "success",
-      message: "Successfully created event",
+      message: "successfully created",
       data: event,
     });
   } catch (error) {
-    console.error(error);
-    res.status(403).json({
-      success: false,
-      message: "failed :( ",
-      error: error,
+    res.status(500).json({
+      status: "error",
+      message: "Error creating event",
+      details: error,
     });
   }
 };
 
-// export const createEvent = (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   try {
-//     const { title, description, start_time, end_time, time_zone, location } =
-//       req.body;
+export const getEventUserId = async (req: Request, res: Response) => {
+  try {
+    const userId = req.query.userId;
 
-//     if (!moment.tz.zone(time_zone)) {
-//       return res.status(400).json({ error: "Invalid timezone" });
-//     }
+    if (!userId) {
+      res.status(404).json({
+        status: "error",
+        message: "Required field userId is missing from query param",
+      });
+      return;
+    }
 
-//     const startTime = moment.tz(start_time, time_zone).utc();
-//     const endTime = moment.tz(end_time, time_zone).utc();
+    const participants = await Participant.findAll({
+      where: { id: +userId },
+    });
 
-//     if (endTime.isBefore(startTime)) {
-//       return res
-//         .status(400)
-//         .json({ error: "End time must be after start time" });
-//     }
+    res.status(200).json({
+      status: "success",
+      message: "successfully retrieved",
+      data: participants,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "Error on searching event",
+      details: error,
+    });
+  }
+};
 
-//     // const event = await Event.create({ title, description, start_time: startTime, end_time: endTime, time_zone, location });
-//     res.status(201).json(event);
-//   } catch (error) {
-//     res.status(500).json({ error: "Error creating event", details: error });
-//   }
-// };
+export const getAllEvents = async (req: Request, res: Response) => {
+  try {
+    const events = await Event.findAll();
+    res.status(200).json({
+      status: "success",
+      message: "Data retrieved successfully.",
+      data: events,
+    });
+  } catch (error) {
+    res.status(403).json({
+      status: "error",
+      message: "failed to fetch events",
+      details: error,
+    });
+  }
+};
+
+const validateEventPayload = (req: Request): ValidationError[] => {
+  const { title, description, startTime, endTime, timeZone } = req.body;
+
+  const validationErrors: ValidationError[] = [];
+
+  // Helper function to add validation errors
+  const addValidationError = (field: string, errors: string[]) => {
+    validationErrors.push({ field, validationError: errors });
+  };
+
+  // Validate title
+  if (!title) {
+    addValidationError("title", [
+      "required field",
+      "Characters length should be 5-150",
+    ]);
+  } else if (title.length < 5 || title.length > 150) {
+    addValidationError("title", ["Characters length should be 5-150"]);
+  }
+
+  // Validate description
+  if (description && description.length > 500) {
+    addValidationError("description", [
+      "Characters length should be up to 500",
+    ]);
+  }
+
+  // Validate startTime
+  if (!startTime) {
+    addValidationError("startTime", ["required field"]);
+  }
+
+  // Validate endTime
+  if (!endTime) {
+    addValidationError("endTime", ["required field"]);
+  }
+
+  // Validate timeZone
+  if (!timeZone) {
+    addValidationError("timeZone", ["required field"]);
+  }
+
+  return validationErrors;
+};
+
+const checkConflict = async (
+  startTime: moment.Moment,
+  endTime: moment.Moment
+) => {
+  const conflictingEvents = await Event.findAll({
+    where: {
+      [Op.or]: [
+        {
+          [Op.and]: [
+            { start_time: { [Op.lt]: endTime } },
+            { end_time: { [Op.gt]: startTime } },
+          ],
+        },
+        {
+          [Op.and]: [
+            { start_time: { [Op.lt]: endTime } },
+            { end_time: { [Op.gt]: startTime } },
+          ],
+        },
+      ],
+    },
+  });
+  return !!conflictingEvents.length;
+};
