@@ -80,7 +80,7 @@ export const createEvent = async (
   }
 };
 
-export const getEventUserId = async (req: Request, res: Response) => {
+export const getEventByUserId = async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId;
 

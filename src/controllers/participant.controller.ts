@@ -88,6 +88,36 @@ export const updateParticipant = async (req: Request, res: Response) => {
   }
 };
 
+export const getParticipantsByEventId = async (req: Request, res: Response) => {
+  try {
+    const eventId = req.query.eventId;
+
+    if (!eventId) {
+      res.status(404).json({
+        status: "error",
+        message: "Required field eventId is missing from query param",
+      });
+      return;
+    }
+
+    const participants = await Participant.findAll({
+      where: { event_id: +eventId },
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "successfully retrieved",
+      data: participants,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "Error on searching event",
+      details: error,
+    });
+  }
+};
+
 const isEventIdExists = async (id: number): Promise<boolean> => {
   if (!id) {
     return false;
