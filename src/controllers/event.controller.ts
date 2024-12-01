@@ -1,7 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import moment from "moment-timezone";
 import { Event, Participant } from "../models";
 import { Op } from "sequelize";
+import { timeLimit, eventLimit } from "../constants";
+import { isRestrictedTimezone } from "../util";
 
 interface ValidationError {
   field: string;
@@ -13,8 +15,8 @@ export const createEvent = async (
   res: Response
 ): Promise<void> => {
   try {
+    //Validate the payload
     const validateEvent = validateEventPayload(req);
-
     if (validateEvent.length) {
       res.status(422).json({
         status: "error",
@@ -27,6 +29,7 @@ export const createEvent = async (
     const { title, description, startTime, endTime, timeZone, location } =
       req.body;
 
+    // Check invalid timezone
     if (!moment.tz.zone(timeZone)) {
       res.status(400).json({
         status: "error",
@@ -37,6 +40,15 @@ export const createEvent = async (
 
     const startUtcTime = moment.tz(startTime, timeZone).utc();
     const endUtcTime = moment.tz(endTime, timeZone).utc();
+
+    // validate start and end time
+    if (endUtcTime.isBefore(startUtcTime)) {
+      res.status(400).json({
+        status: "error",
+        message: "End time must be after start time",
+      });
+      return;
+    }
 
     // Check new event is conflict with existing event
     const conflictExist = await checkConflict(startUtcTime, endUtcTime);
@@ -49,12 +61,23 @@ export const createEvent = async (
       return;
     }
 
-    if (endUtcTime.isBefore(startUtcTime)) {
-      res.status(400).json({
-        status: "error",
-        message: "End time must be after start time",
+    // Check Restriction timezone
+    if (isRestrictedTimezone(timeZone)) {
+      const time = moment().tz(timeZone).subtract(timeLimit, "day").utc();
+
+      const eventCount = await Event.count({
+        where: {
+          created_at: { [Op.gt]: time },
+        },
       });
-      return;
+
+      if (eventCount > eventLimit) {
+        res.status(429).json({
+          status: "error",
+          message: `You have reached the limit of ${eventLimit} free events in ${timeLimit} days`,
+        });
+        return;
+      }
     }
 
     const event = await Event.create({
@@ -187,8 +210,8 @@ const checkConflict = async (
         },
         {
           [Op.and]: [
-            { start_time: { [Op.lt]: endTime } },
-            { end_time: { [Op.gt]: startTime } },
+            { start_time: { [Op.eq]: startTime } },
+            { end_time: { [Op.eq]: endTime } },
           ],
         },
       ],
