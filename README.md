@@ -31,45 +31,53 @@ An Event Scheduling System that enables users to create and manage events, addre
   - Event conflict checks [partially or completely overlap]
   - Restrict to certain country to create limited events for certain interval.
 
-    #### API Detail
+  #### API Detail
 
-    |        |                             |
-    | ------ | :-------------------------- |
-    | URL    | `localhost:3000/api/events` |
-    | Method | `POST`                      |
+  **URL:**
+  `localhost:3000/api/events`
 
-    ##### Payload
+  **Method:**
+  `POST`
 
-    ```javascript
-        {
-            "title": "UTC time",
-            "description": "Description 2",
-            "startTime": "Sun Dec 01 2024 9:40:52 GMT+0545 (Nepal Time)",
-            "endTime": "Sun Dec 01 2024 9:50:52 GMT+0545 (Nepal Time)",
-            "timeZone": "Asia/Katmandu",
-            "location": "Nepal"
-        }
-    ```
+  **Headers:**
+  | Key | Value |
+  |---------------|-------------------|
+  | `Content-Type`| `application/json`|
+
+  **Body:**
+
+  ```json
+  {
+    "title": "Team Meeting",
+    "description": "Weekly sync-up meeting",
+    "startTime": "2024-12-02T10:00:00Z",
+    "endTime": "2024-12-02T11:00:00Z",
+    "timeZone": "UTC",
+    "location": "Zoom"
+  }
+  ```
 
 - ### List out all events
 
   #### API Detail
 
-  |        |                             |
-  | ------ | :-------------------------- |
-  | URL    | `localhost:3000/api/events` |
-  | Method | `GET`                       |
+  **URL:**
+  `localhost:3000/api/events`
+
+  **Method:**
+  `GET`
 
 - ### Filter the events by userId
 
   - Checks the provided user id is exist in participant table or not
 
-    #### API Detail
+  #### API Detail
 
-    |        |                                             |
-    | ------ | :------------------------------------------ |
-    | URL    | `localhost:3000/api/events/search?userId=1` |
-    | Method | `GET`                                       |
+  **URL:**
+  `localhost:3000/api/events/search?userId=1`
+
+  **Method:**
+  `GET`
 
 - ### Update event
 
@@ -78,28 +86,35 @@ An Event Scheduling System that enables users to create and manage events, addre
 
   #### API Detail
 
-  |        |                             |
-  | ------ | :-------------------------- |
-  | URL    | `localhost:3000/api/events` |
-  | Method | `PUT`                       |
+  **URL:**
+  `localhost:3000/api/events`
 
-  ##### Payload
+  **Method:**
+  `PUT`
 
-  ```javascript
-      {
-          "title": "UTC time",
-          "description": "Descriptin 2",
-      }
+  **Headers:**
+  | Key | Value |
+  |---------------|-------------------|
+  | `Content-Type`| `application/json`|
+
+  **Body:**
+
+  ```json
+  {
+    "title": "UTC time",
+    "description": "Description 2"
+  }
   ```
 
 - ### Delete event
 
   #### API Detail
 
-  |        |                             |
-  | ------ | :-------------------------- |
-  | URL    | `localhost:3000/api/events` |
-  | Method | `DELETE`                    |
+  **URL:**
+  `localhost:3000/api/events/:id`
+
+  **Method:**
+  `DELETE`
 
 ## Participant
 
@@ -109,32 +124,39 @@ An Event Scheduling System that enables users to create and manage events, addre
   - Checks the provided participant's email is already being used or not
   - Validate the email if provided
 
-    #### API Detail
+  #### API Detail
 
-    |        |                                   |
-    | ------ | :-------------------------------- |
-    | URL    | `localhost:3000/api/participants` |
-    | Method | `POST`                            |
+  **URL:**
+  `localhost:3000/api/participants`
 
-    ##### Payload
+  **Method:**
+  `POST`
 
-    ```javascript
-        {
-            "eventId": "1",
-            "name": "Quick catch up",
-            "email": "sd",
-            "rsvpStatus": "pending"
-        }
-    ```
+  **Headers:**
+  | Key | Value |
+  |---------------|-------------------|
+  | `Content-Type`| `application/json`|
+
+  **Body:**
+
+  ```json
+  {
+    "eventId": "1",
+    "name": "Quick catch up",
+    "email": "sd",
+    "rsvpStatus": "pending"
+  }
+  ```
 
 - ### List out all participants
 
   #### API Detail
 
-  |        |                                   |
-  | ------ | :-------------------------------- |
-  | URL    | `localhost:3000/api/participants` |
-  | Method | `GET`                             |
+  **URL:**
+  `localhost:3000/api/participants`
+
+  **Method:**
+  `GET`
 
 - ### Update participant
 
@@ -143,18 +165,23 @@ An Event Scheduling System that enables users to create and manage events, addre
 
   #### API Detail
 
-  |        |                                   |
-  | ------ | :-------------------------------- |
-  | URL    | `localhost:3000/api/participants` |
-  | Method | `PUT`                             |
+  **URL:**
+  `localhost:3000/api/participants`
 
-  ##### Payload
+  **Method:**
+  `PUT`
 
-  ```javascript
-      {
-          "rsvp_status": "accepted",
-      }
+  **Headers:**
+  | Key | Value |
+  |---------------|-------------------|
+  | `Content-Type`| `application/json`|
 
+  **Body:**
+
+  ```json
+  {
+    "rsvp_status": "accepted"
+  }
   ```
 
 - ### Provides the participants detail by eventId
@@ -163,16 +190,18 @@ An Event Scheduling System that enables users to create and manage events, addre
 
     #### API Detail
 
-    |        |                                                     |
-    | ------ | :-------------------------------------------------- |
-    | URL    | `localhost:3000/api/participants/search?eventId=23` |
-    | Method | `GET`                                               |
+    **URL:**
+    `localhost:3000/api/participants/search?eventId=23`
+
+    **Method:**
+    `GET`
 
 - ### Delete participant
 
   #### API Detail
 
-  |        |                                   |
-  | ------ | :-------------------------------- |
-  | URL    | `localhost:3000/api/participants` |
-  | Method | `DELETE`                          |
+  **URL:**
+  `localhost:3000/api/participants/:id`
+
+  **Method:**
+  `DELETE`
