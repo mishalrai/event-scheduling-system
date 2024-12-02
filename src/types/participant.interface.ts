@@ -1,15 +1,15 @@
-export enum  RSVP_STATUS{
-    ACCEPTED = 'accepted',
-    DECLINED = 'declined',
-    PENDING = 'pending'
+export enum RSVP_STATUS {
+  ACCEPTED = "accepted",
+  DECLINED = "declined",
+  PENDING = "pending",
 }
 
-export interface ParticipantAttributes {
+export interface Participant {
   id: number;
-  event_id: number;
+  eventId: number;
   name: string;
   email: string;
-  rsvp_status: RSVP_STATUS;
+  rsvpStatus: RSVP_STATUS;
   created_at: Date;
   updated_at: Date;
 }

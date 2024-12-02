@@ -2,8 +2,9 @@ import { Request, Response } from "express";
 import moment from "moment-timezone";
 import { Event, Participant } from "../models";
 import { Op } from "sequelize";
-import { timeLimit, eventLimit } from "../constants";
-import { isRestrictedTimezone } from "../util";
+import { timeLimit, eventLimit, eventKeyMapping } from "../constants";
+import { filterAllowedPayload, isRestrictedTimezone } from "../util";
+import { isEventIdExist, isUserIdExist } from "./util.controler";
 
 interface ValidationError {
   field: string;
@@ -103,7 +104,7 @@ export const createEvent = async (
   }
 };
 
-export const getEventByUserId = async (req: Request, res: Response) => {
+export const getEventsByUserId = async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId;
 
@@ -115,14 +116,34 @@ export const getEventByUserId = async (req: Request, res: Response) => {
       return;
     }
 
+    const isUserExist = await isUserIdExist(+userId);
+    if (!isUserExist) {
+      res.status(422).json({
+        status: "error",
+        message: "User doesn't exist",
+      });
+      return;
+    }
+
     const participants = await Participant.findAll({
       where: { id: +userId },
+      attributes: ["event_id"],
+    });
+
+    const eventIds = participants.map(
+      (participant: any) => participant.event_id
+    );
+
+    const events = await Event.findAll({
+      where: {
+        id: eventIds,
+      },
     });
 
     res.status(200).json({
       status: "success",
       message: "successfully retrieved",
-      data: participants,
+      data: events,
     });
   } catch (error) {
     res.status(500).json({
@@ -145,6 +166,74 @@ export const getAllEvents = async (req: Request, res: Response) => {
     res.status(403).json({
       status: "error",
       message: "failed to fetch events",
+      details: error,
+    });
+  }
+};
+
+export const updateEvent = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      res.status(404).json({
+        status: "error",
+        message: "id is required to update",
+      });
+      return;
+    }
+    const isEventExist = await isEventIdExist(+id);
+    if (!isEventExist) {
+      res.status(422).json({
+        status: "error",
+        message: "Event doesn't exist",
+      });
+      return;
+    }
+
+    const payload = filterAllowedPayload(req.body, eventKeyMapping);
+    const updatedEvent = await Event.update(payload, {
+      where: { id: +id },
+      returning: true,
+    });
+    res.status(200).json({
+      status: "success",
+      message: "updated successfully",
+      data: updatedEvent[1],
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "Failed to update event",
+      details: error,
+    });
+  }
+};
+
+export const deleteEvent = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      res.status(404).json({
+        status: "error",
+        message: "id is required to update",
+      });
+      return;
+    }
+    const result = await Event.destroy({
+      where: { id: +id },
+    });
+    if (result !== 0) {
+      res.status(200).json({
+        status: "success",
+        message: "deleted successfully",
+      });
+      return;
+    }
+    throw "provided id is not found";
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "Failed to delete",
       details: error,
     });
   }

@@ -5,9 +5,13 @@ import {
   getAllParticipants,
   updateParticipant,
   getParticipantsByEventId,
+  deleteParticipant,
 } from "../controllers/participant.controller";
 
 export const participantRouter: Router = express.Router();
 participantRouter.route("/").get(getAllParticipants).post(addParticipant);
-participantRouter.route("/:id").put(updateParticipant);
+participantRouter
+  .route("/:id")
+  .delete(deleteParticipant)
+  .put(updateParticipant);
 participantRouter.route("/search").get(getParticipantsByEventId);
