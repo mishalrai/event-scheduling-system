@@ -1,0 +1,35 @@
+{
+  "name": "event-scheduling-system",
+  "version": "1.0.0",
+  "description": "An Event Scheduling System that enables users to create and manage events, addressing complexities such as time zone handling, conflict detection, and time-sensitive validations. The system ensures events are scheduled without overlaps and adhere to users' respective time zones.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx nodemon ./src/app.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "moment": "^2.30.1",
+    "morgan": "^1.10.0",
+    "pg": "^8.13.1",
+    "sequelize": "^6.37.5",
+    "timezones": "^0.0.1",
+    "tzdata": "^1.0.42"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.10.1",
+    "@types/sequelize": "^4.28.20",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
