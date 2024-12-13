@@ -1,1 +1,16 @@
-<p>event works!</p>
+<h1>Event List</h1>
+
+@if (isFetching | async) {
+<h2>Fetching Events</h2>
+}
+
+@for ( event of events | async; track event.id) {
+<div class="event">
+    <h2>{{event.title}}</h2>
+    <p>{{event.description}}</p>
+    <p>{{event.start_time}}</p>
+    <p>{{event.end_time}}</p>
+    <p>{{event.time_zone}}</p>
+</div>
+<br>
+}

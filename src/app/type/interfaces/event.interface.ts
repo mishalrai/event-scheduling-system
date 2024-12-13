@@ -2,9 +2,9 @@ export interface Event {
   id: number;
   title: string;
   description?: string;
-  startTime: string;
-  endTime: string;
-  timeZone: string;
+  start_time: string;
+  end_time: string;
+  time_zone: string;
   createdAt?: string;
   updatedAt?: string;
 }
